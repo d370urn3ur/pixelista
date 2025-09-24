@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,12 +31,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun Gallery(files: Map<String, List<List<Color>>>, modifier: Modifier = Modifier, onLoad: (String) -> Unit) {
+fun Gallery(files: Map<String, List<List<Color>>>, modifier: Modifier = Modifier, onLoad: (String) -> Unit, onDelete: (String) -> Unit) {
 
     val keys = files.entries.sortedBy { it.key }.map { it.key }
     var selectedItem by remember { mutableStateOf<String?>(null) }
 
-    Column(modifier) {
+    Column(modifier.background(MaterialTheme.colorScheme.surface)) {
 
         Row(Modifier.fillMaxWidth()) {
 
@@ -49,11 +50,20 @@ fun Gallery(files: Map<String, List<List<Color>>>, modifier: Modifier = Modifier
             }) {
                 Icon(painterResource(R.drawable.ic_file_open), contentDescription = "")
             }
+
+            IconButton({
+                selectedItem?.let {
+                    onDelete(it)
+                    selectedItem = null
+                }
+            }) {
+                Icon(painterResource(R.drawable.ic_delete), contentDescription = "")
+            }
         }
 
         LazyVerticalGrid(
             columns = GridCells.Adaptive(100.dp),
-            Modifier.fillMaxSize().background(Color.Black)
+            Modifier.fillMaxSize()
         ) {
 
             items(keys) { key: String ->
