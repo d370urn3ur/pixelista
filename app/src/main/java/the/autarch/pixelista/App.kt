@@ -192,11 +192,9 @@ fun ScreenContainer(
     val sizeClass = currentWindowAdaptiveInfo().windowSizeClass
     val isWidthAtLeastExpanded = sizeClass.isWidthAtLeastBreakpoint(WIDTH_DP_EXPANDED_LOWER_BOUND)
 
-    val modif = if (isWidthAtLeastExpanded) {
+    val modif = Modifier.takeIf({ isWidthAtLeastExpanded })?.then(
         Modifier.windowInsetsPadding(WindowInsets.displayCutout)
-    } else {
-        Modifier
-    }
+    ) ?: Modifier
 
     if (isWidthAtLeastExpanded) {
         Row(modif) {
