@@ -42,7 +42,6 @@ import androidx.window.core.layout.WindowSizeClass.Companion.WIDTH_DP_MEDIUM_LOW
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-// TODO: fix app icon grid colors
 // TODO: Tutorial
 
 @OptIn(ExperimentalUuidApi::class, ExperimentalMaterial3Api::class)
