@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.konan.properties.hasProperty
 import java.io.FileInputStream
 import java.util.Properties
 
@@ -8,10 +9,13 @@ plugins {
     alias(libs.plugins.kotlinx.serialization)
 }
 
-val keystoreProperties = Properties()
-val keystorePropertiesFile = rootProject.file("key.properties")
-if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+val keystoreProperties = try {
+    val keystorePropertiesFile = rootProject.file("keystore.properties")
+    Properties().apply {
+        load(FileInputStream(keystorePropertiesFile))
+    }
+} catch (_: Throwable) {
+    Properties()
 }
 
 kotlin {
@@ -21,6 +25,7 @@ kotlin {
 }
 
 android {
+
     namespace = "the.autarch.pixelista"
     compileSdk = 36
 
@@ -35,14 +40,24 @@ android {
     }
 
     signingConfigs {
-        create("release") {
-            keyAlias = keystoreProperties["keyAlias"] as? String
-            keyPassword = keystoreProperties["keyPassword"] as? String
-            storeFile = if (keystoreProperties["storeFile"] as? String != null) file(keystoreProperties["storeFile"] as String) else null
+        val keystoreFile = if (keystoreProperties.hasProperty("storeFile")) {
+            val keystorePath = keystoreProperties["storeFile"] as String
+            file(System.getProperty("user.home") + File.separator + keystorePath)
+        } else {
+            file(System.getProperty("user.home"))
+        }
+        create("playstore") {
+            storeFile = keystoreFile
             storePassword = keystoreProperties["storePassword"] as? String
+            keyAlias = keystoreProperties["keyAlias"]  as? String
+            keyPassword = keystoreProperties["keyPassword"] as? String
         }
     }
-
+    flavorDimensions += "signing"
+    productFlavors {
+        create("github") {}
+        create("playstore") {}
+    }
     buildTypes {
         release {
             isShrinkResources = true
@@ -51,7 +66,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
+            productFlavors.getByName("playstore").signingConfig = signingConfigs.getByName("playstore")
         }
     }
     compileOptions {

@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  Release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: Build App
+        run: |
+          bash ./gradlew assembleGithubRelease
+          bash ./gradlew bundleGithubRelease
+
+      - name: Move files
+        run: |
+          mv app/build/outputs/apk/github/release/app-github-release-unsigned.apk app/build/outputs/app-release.apk
+          mv app/build/outputs/bundle/githubRelease/app-github-release.aab app/build/outputs/app-release.aab
+
+      - name: Sign App
+        id: sign_app
+        uses: ilharp/sign-android-release@v1.0.4
+        with:
+          buildToolsVersion: 36.1.0
+          releaseDir: app/build/outputs
+          signingKey: ${{ secrets.SIGNING_KEY }}
+          keyAlias: ${{ secrets.ALIAS }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
+
+      # - name: Build Changelog
+      #   id: changelog
+      #   uses: ardalanamini/auto-changelog@v3
+      #   with:
+      #     mention-authors: false
+      #     mention-new-contributors: false
+      #     include-compare: false
+      #     semver: false
+
+      - name: Create Release
+        id: create_release
+        uses: ncipollo/release-action@v1.13.0
+        with:
+          artifacts: "app/build/outputs/app-release-signed.aab, app/build/outputs/app-release-signed.apk"
+          body: ${{ steps.changelog.outputs.changelog }}
+          name: Release ${{ github.event.head_commit.message }}
+          token: ${{ secrets.GITHUB_TOKEN }}
