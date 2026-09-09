@@ -1,5 +1,4 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.konan.properties.hasProperty
 import java.io.FileInputStream
 import java.util.Properties
 
@@ -27,12 +26,12 @@ kotlin {
 android {
 
     namespace = "the.autarch.pixelista"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "the.autarch.pixelista"
         minSdk = 28
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 2
         versionName = "1.0.1"
 
@@ -40,7 +39,7 @@ android {
     }
 
     signingConfigs {
-        val keystoreFile = if (keystoreProperties.hasProperty("storeFile")) {
+        val keystoreFile = if (keystoreProperties.containsKey("storeFile")) {
             val keystorePath = keystoreProperties["storeFile"] as String
             file(System.getProperty("user.home") + File.separator + keystorePath)
         } else {
