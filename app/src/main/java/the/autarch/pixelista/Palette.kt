@@ -18,10 +18,33 @@ import androidx.window.core.layout.WindowSizeClass.Companion.WIDTH_DP_EXPANDED_L
 
 object Palette {
 
+    // Dubble Gums 16 : https://lospec.com/palette-list/dubble-gums-16
+    private val altTop = listOf(
+        Color(0xFFea6cb4),
+        Color(0xFFffa8be),
+        Color(0xFFe4fffe),
+        Color(0xFF7be2de),
+        Color(0xFF1d9ec8),
+        Color(0xFF36a5a1),
+        Color(0xFF56cf1e),
+        Color(0xFFc2eb44),
+    )
+    private val altBottom = listOf(
+        Color(0xFFfcd825),
+        Color(0xFFf3b523),
+        Color(0xFFeb883a),
+        Color(0xFFec302c),
+        Color(0xFFb21e4d),
+        Color(0xFF5d2486),
+        Color(0xFFae7eaf),
+        Color(0xFFe0b6d3),
+    )
+
     @Composable
     fun ColorPalette(currentColor: Color, modifier: Modifier = Modifier, onChangeBrushColor: (Color) -> Unit) {
 
-        val topColors = listOf(
+        val topColors = // altTop
+            listOf(
             Color.Black,
             Color(0xff273746),
             Color(0xff8e44ad),
@@ -31,7 +54,9 @@ object Palette {
             Color(0xffe5e7e9),
             Color.White
         )
-        val bottomColors = listOf(
+
+        val bottomColors = // altBottom
+            listOf(
             Color(0xffe74c3c),
             Color(0xfff39c12),
             Color(0xfff4d03f),
