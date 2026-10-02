@@ -31,7 +31,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun Gallery(files: Map<String, List<List<Color>>>, modifier: Modifier = Modifier, onLoad: (String) -> Unit, onDelete: (String) -> Unit) {
+fun Gallery(
+    files: Map<String, List<List<Color>>>,
+    modifier: Modifier = Modifier,
+    onLoad: (String) -> Unit,
+    onDelete: (String) -> Unit
+) {
 
     val keys = files.entries.sortedBy { it.key }.map { it.key }
     var selectedItem by remember { mutableStateOf<String?>(null) }

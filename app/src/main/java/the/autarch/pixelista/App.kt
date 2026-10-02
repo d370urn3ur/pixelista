@@ -5,8 +5,11 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,9 +21,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
@@ -29,10 +34,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass.Companion.HEIGHT_DP_MEDIUM_LOWER_BOUND
 import androidx.window.core.layout.WindowSizeClass.Companion.WIDTH_DP_EXPANDED_LOWER_BOUND
@@ -50,19 +58,23 @@ fun App() {
     var showDimensDialog by remember { mutableStateOf(false) }
     var drawGuides by remember { mutableStateOf(true) }
 
-    var pxField by remember { mutableStateOf(List(8) {
-        List(8) { Color.Black }
-    }) }
+    var pxField by remember {
+        mutableStateOf(List(8) {
+            List(8) {
+                Color.Black
+            }
+        }) }
 
     val rows = pxField.size
     val cols = pxField.firstOrNull()?.size ?: 0
 
     var brushColor by remember { mutableStateOf(Color.Black) }
-
+    var paletteSelection by remember { mutableStateOf(PaletteSelection.default) }
     val history by remember { mutableStateOf(History()) }
     val disk by remember { mutableStateOf(Disk(context)) }
     val galleryImages by disk.images.collectAsStateWithLifecycle()
     var isGalleryOpen by remember { mutableStateOf(false) }
+    var isPaletteSelectorOpen by remember { mutableStateOf(false) }
 
     val sizeClass = currentWindowAdaptiveInfoV2().windowSizeClass
     val isHeightAtLeastMedium = sizeClass.isHeightAtLeastBreakpoint(HEIGHT_DP_MEDIUM_LOWER_BOUND)
@@ -85,7 +97,11 @@ fun App() {
 
             ScreenContainer(
                 paletteBar = { mod ->
-                    Palette.ColorPalette(brushColor, mod) { selectedColor ->
+                    Palette.ColorPalette(
+                        paletteSelection,
+                        brushColor,
+                        mod
+                    ) { selectedColor ->
                         brushColor = selectedColor
                     }
                 },
@@ -121,7 +137,8 @@ fun App() {
                             history.clear()
                         },
                         onSave = { disk.save(filename, pxField) },
-                        onOpenGallery = { isGalleryOpen = true }
+                        onOpenGallery = { isGalleryOpen = true },
+                        onOpenPaletteSelector = { isPaletteSelectorOpen = true }
                     )
                 }
             )
@@ -173,6 +190,73 @@ fun App() {
                             disk.delete(name)
                         }
                     )
+                }
+            }
+
+            AnimatedVisibility(
+                isPaletteSelectorOpen,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                Row(
+                    Modifier.fillMaxSize()
+                        .clickable { isPaletteSelectorOpen = false }
+                        .background(Color.Black.copy(alpha = 0.5f))
+                ) {
+                    Spacer(Modifier.weight(0.2f))
+                    PaletteSelector(
+                        paletteSelection,
+                        Modifier
+                            .animateEnterExit(
+                                enter = slideInHorizontally(initialOffsetX = { it }),
+                                exit = slideOutHorizontally(targetOffsetX = { it })
+                            )
+                            .fillMaxHeight().weight(0.8f),
+                        onSelect = { selection ->
+                            paletteSelection = selection
+                            isPaletteSelectorOpen = false
+                        },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun PaletteSelector(
+    currentSelection: PaletteSelection,
+    modifier: Modifier = Modifier,
+    onSelect: (PaletteSelection) -> Unit,
+) {
+    Surface(
+        modifier = modifier
+            .clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() }
+            ) {}
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            for (selection in PaletteSelection.database) {
+                Row(
+                    Modifier.padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
+                    Button(
+                        onClick = { onSelect(selection) },
+                    ) {
+                        Text(selection.name)
+                    }
+
+                    if (currentSelection == selection) {
+                        Image(
+                            painterResource(R.drawable.ic_check),
+                            contentDescription = null,
+                            Modifier.padding(horizontal = 8.dp)
+                        )
+                    }
                 }
             }
         }

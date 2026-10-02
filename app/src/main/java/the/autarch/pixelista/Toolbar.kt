@@ -21,7 +21,8 @@ fun ToolsBar(
     onChangeFieldDimensions: () -> Unit,
     onNewImage: () -> Unit,
     onSave: () -> Unit,
-    onOpenGallery: () -> Unit
+    onOpenGallery: () -> Unit,
+    onOpenPaletteSelector: () -> Unit
 ) {
 
     val sizeClass = currentWindowAdaptiveInfoV2().windowSizeClass
@@ -55,6 +56,10 @@ fun ToolsBar(
 
     list.add(@Composable { IconButton(onOpenGallery) {
         Icon(painterResource(R.drawable.ic_gallery), contentDescription = "")
+    } })
+
+    list.add(@Composable { IconButton(onOpenPaletteSelector) {
+        Icon(painterResource(R.drawable.ic_palette), contentDescription = "")
     } })
 
     if (isWidthAtLeastExpanded) {
