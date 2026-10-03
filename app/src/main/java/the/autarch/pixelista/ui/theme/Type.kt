@@ -10,7 +10,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import the.autarch.pixelista.R
 
-@OptIn(ExperimentalTextApi::class)
 val pixelifyRegular = FontFamily(
     Font(
         R.font.pixelify_sans_variable,

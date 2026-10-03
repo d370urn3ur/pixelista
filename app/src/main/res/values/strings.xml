@@ -1,3 +1,14 @@
 <resources>
+
     <string name="app_name" translatable="false">Pixelista</string>
+
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+
+    <string name="dialog_title_new_image">New Picture</string>
+    <string name="dialog_message_new_image">Starting a new picture will erase any changes you have made to the current one since your last save. Are you sure you want to continue?</string>
+
+    <string name="dialog_title_delete_image">Delete Picture</string>
+    <string name="dialog_message_delete_image">If you delete this picture you will not be able to recover it. Are you sure you want to continue?</string>
+
 </resources>

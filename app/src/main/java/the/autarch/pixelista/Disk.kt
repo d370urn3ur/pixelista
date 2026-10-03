@@ -3,8 +3,12 @@ package the.autarch.pixelista
 import android.content.Context
 import android.util.Log
 import androidx.compose.ui.graphics.Color
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
@@ -16,11 +20,14 @@ class Disk(context: Context) {
     }
 
     private val appContext = context.applicationContext
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val _images = MutableStateFlow<Map<String, List<List<Color>>>>(emptyMap())
     val images = _images.asStateFlow()
 
     init {
-        _images.value = loadFromDisk()
+        scope.launch {
+            _images.value = loadFromDisk()
+        }
     }
 
     fun save(name: String, data: List<List<Color>>) {
@@ -28,7 +35,9 @@ class Disk(context: Context) {
         old[name] = data
         _images.value = old.toMap()
 
-        persistToDisk(_images.value)
+        scope.launch {
+            persistToDisk(_images.value)
+        }
     }
 
     fun load(name: String): List<List<Color>>? = images.value[name]
@@ -37,7 +46,9 @@ class Disk(context: Context) {
         val old = _images.value.toMutableMap()
         old.remove(name)
         _images.value = old.toMap()
-        persistToDisk(_images.value)
+        scope.launch {
+            persistToDisk(_images.value)
+        }
     }
 
     private fun persistToDisk(data: Map<String, List<List<Color>>>) {

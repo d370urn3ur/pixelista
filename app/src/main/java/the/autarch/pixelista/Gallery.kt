@@ -4,7 +4,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -38,7 +37,9 @@ fun Gallery(
     onDelete: (String) -> Unit
 ) {
 
-    val keys = files.entries.sortedBy { it.key }.map { it.key }
+    val keys = remember(files) {
+        files.entries.sortedBy { it.key }.map { it.key }
+    }
     var selectedItem by remember { mutableStateOf<String?>(null) }
 
     Column(modifier.background(MaterialTheme.colorScheme.surface)) {
@@ -68,7 +69,7 @@ fun Gallery(
 
         LazyVerticalGrid(
             columns = GridCells.Adaptive(100.dp),
-            Modifier.fillMaxSize()
+            Modifier.fillMaxSize().weight(1f)
         ) {
 
             items(keys) { key: String ->
@@ -83,16 +84,17 @@ fun Gallery(
 
 @Composable
 fun GalleryItem(data: List<List<Color>>, selected: Boolean, onSelect: () -> Unit) {
+
     val selectedMod = if (selected) {
         Modifier.border(width = 5.dp, color = Color.Magenta)
     } else {
         Modifier
     }
 
-    Canvas(selectedMod.size(100.dp).clickable { onSelect() }) {
+    val rows = data.size
+    val cols = data.firstOrNull()?.size ?: 0
 
-        val rows = data.size
-        val cols = data.firstOrNull()?.size ?: 0
+    Canvas(selectedMod.size(100.dp).clickable { onSelect() }) {
 
         var viewport = Rect.Zero
 

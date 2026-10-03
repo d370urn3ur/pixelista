@@ -1,5 +1,8 @@
 package the.autarch.pixelista
 
+import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -48,8 +51,9 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 // TODO: Tutorial
+// TODO: share image
 
-@OptIn(ExperimentalUuidApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun App() {
 
@@ -59,8 +63,8 @@ fun App() {
     var drawGuides by remember { mutableStateOf(true) }
 
     var pxField by remember {
-        mutableStateOf(List(8) {
-            List(8) {
+        mutableStateOf(List(8) {    // rows
+            List(8) {   // columns
                 Color.Black
             }
         }) }
@@ -75,9 +79,22 @@ fun App() {
     val galleryImages by disk.images.collectAsStateWithLifecycle()
     var isGalleryOpen by remember { mutableStateOf(false) }
     var isPaletteSelectorOpen by remember { mutableStateOf(false) }
+    var showNewImageDialog by remember { mutableStateOf(false) }
+    var showDeleteDialogName: String? by remember { mutableStateOf(null) }
 
     val sizeClass = currentWindowAdaptiveInfoV2().windowSizeClass
     val isHeightAtLeastMedium = sizeClass.isHeightAtLeastBreakpoint(HEIGHT_DP_MEDIUM_LOWER_BOUND)
+
+//    val launcher = rememberLauncherForActivityResult(
+//        contract = ActivityResultContracts.OpenDocumentTree()
+//    ) { uri ->
+//        if (uri != null) {
+//            val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+//            context.contentResolver.takePersistableUriPermission(uri, flags)
+//            StoragePrefs.saveTreeUri(context, uri.toString())
+//            asdf
+//        }
+//    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -131,11 +148,7 @@ fun App() {
                         onClickUndo = { pxField = history.undo(pxField) },
                         onClickToggleGuides = { drawGuides = !drawGuides },
                         onChangeFieldDimensions = { showDimensDialog = true },
-                        onNewImage = {
-                            filename = Uuid.random().toString()
-                            pxField = List(rows) { List(cols) { Color.Black } }
-                            history.clear()
-                        },
+                        onNewImage = { showNewImageDialog = true },
                         onSave = { disk.save(filename, pxField) },
                         onOpenGallery = { isGalleryOpen = true },
                         onOpenPaletteSelector = { isPaletteSelectorOpen = true }
@@ -144,11 +157,12 @@ fun App() {
             )
 
             if (showDimensDialog) {
-                DimensDialog(
+
+                DimensDialogWheel(
                     rows,
                     cols,
                     onCancel = { showDimensDialog = false },
-                    onAccept = { (cs, rs) ->
+                    onAccept = { (rs, cs) ->
                         pxField = List(rs) {
                             List(cs) {
                                 Color.Black
@@ -157,6 +171,20 @@ fun App() {
                         showDimensDialog = false
                     }
                 )
+
+//                DimensDialogSlider(
+//                    rows,
+//                    cols,
+//                    onCancel = { showDimensDialog = false },
+//                    onAccept = { (rs, cs) ->
+//                        pxField = List(rs) {
+//                            List(cs) {
+//                                Color.Black
+//                            }
+//                        }
+//                        showDimensDialog = false
+//                    }
+//                )
             }
 
             AnimatedVisibility(
@@ -187,7 +215,7 @@ fun App() {
                             }
                         },
                         onDelete = { name ->
-                            disk.delete(name)
+                            showDeleteDialogName = name
                         }
                     )
                 }
@@ -219,75 +247,33 @@ fun App() {
                     )
                 }
             }
-        }
-    }
-}
 
-@Composable
-fun PaletteSelector(
-    currentSelection: PaletteSelection,
-    modifier: Modifier = Modifier,
-    onSelect: (PaletteSelection) -> Unit,
-) {
-    Surface(
-        modifier = modifier
-            .clickable(
-                indication = null,
-                interactionSource = remember { MutableInteractionSource() }
-            ) {}
-    ) {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            for (selection in PaletteSelection.database) {
-                Row(
-                    Modifier.padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-
-                    Button(
-                        onClick = { onSelect(selection) },
-                    ) {
-                        Text(selection.name)
+            if (showNewImageDialog) {
+                VerificationDialog<Unit>(
+                    title = stringResource(R.string.dialog_title_new_image),
+                    message = stringResource(R.string.dialog_message_new_image),
+                    onCancel = { showNewImageDialog = false },
+                    onAccept = {
+                        showNewImageDialog = false
+                        filename = Uuid.random().toString()
+                        pxField = List(rows) { List(cols) { Color.Black } }
+                        history.clear()
                     }
-
-                    if (currentSelection == selection) {
-                        Image(
-                            painterResource(R.drawable.ic_check),
-                            contentDescription = null,
-                            Modifier.padding(horizontal = 8.dp)
-                        )
-                    }
-                }
+                )
             }
-        }
-    }
-}
 
-@Composable
-fun ScreenContainer(
-    paletteBar: @Composable (Modifier) -> Unit,
-    screen: @Composable (Modifier) -> Unit,
-    toolbar: @Composable () -> Unit
-) {
-
-    val sizeClass = currentWindowAdaptiveInfoV2().windowSizeClass
-    val isWidthAtLeastExpanded = sizeClass.isWidthAtLeastBreakpoint(WIDTH_DP_EXPANDED_LOWER_BOUND)
-
-    val modif = Modifier.takeIf({ isWidthAtLeastExpanded })?.then(
-        Modifier.windowInsetsPadding(WindowInsets.displayCutout)
-    ) ?: Modifier
-
-    if (isWidthAtLeastExpanded) {
-        Row(modif) {
-            paletteBar(Modifier.weight(0.15f))
-            screen(Modifier.fillMaxHeight().weight(0.85f))
-            toolbar()
-        }
-    } else {
-        Column(modif) {
-            paletteBar(Modifier.weight(0.15f))
-            screen(Modifier.fillMaxWidth().weight(0.85f))
-            toolbar()
+            showDeleteDialogName?.let { name ->
+                VerificationDialog(
+                    title = stringResource(R.string.dialog_title_delete_image),
+                    message = stringResource(R.string.dialog_message_delete_image),
+                    payload = name,
+                    onCancel = { showDeleteDialogName = null },
+                    onAccept = {
+                        showDeleteDialogName = null
+                        disk.delete(name)
+                    }
+                )
+            }
         }
     }
 }
