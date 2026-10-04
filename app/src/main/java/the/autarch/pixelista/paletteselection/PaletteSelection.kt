@@ -1,4 +1,4 @@
-package the.autarch.pixelista
+package the.autarch.pixelista.paletteselection
 
 import androidx.compose.ui.graphics.Color
 

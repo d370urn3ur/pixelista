@@ -1,4 +1,4 @@
-package the.autarch.pixelista
+package the.autarch.pixelista.presentation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.dp
 import androidx.window.core.layout.WindowSizeClass.Companion.WIDTH_DP_EXPANDED_LOWER_BOUND
+import the.autarch.pixelista.paletteselection.PaletteSelection
 
 object Palette {
 

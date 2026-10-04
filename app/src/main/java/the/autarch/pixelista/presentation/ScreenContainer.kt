@@ -1,4 +1,4 @@
-package the.autarch.pixelista
+package the.autarch.pixelista.presentation
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row

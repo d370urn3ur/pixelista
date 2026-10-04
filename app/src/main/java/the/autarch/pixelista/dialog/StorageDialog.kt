@@ -1,4 +1,4 @@
-package the.autarch.pixelista
+package the.autarch.pixelista.dialog
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,35 +15,28 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import the.autarch.pixelista.R
 
 @Composable
-fun <Payload> VerificationDialog(
-    title: String,
-    message: String,
-    payload: Payload? = null,
+fun StorageDialog(
     onCancel: () -> Unit,
-    onAccept: (Payload?) -> Unit
+    onAccept: () -> Unit
 ) {
-
     Dialog(onDismissRequest = { onCancel() }) {
-
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
             shape = RoundedCornerShape(16.dp),
         ) {
-
             Column(
                 Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-
                 Text(
-                    text = title,
+                    text = "Select your storage location",
                     modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.CenterHorizontally),
@@ -51,33 +44,21 @@ fun <Payload> VerificationDialog(
                     style = MaterialTheme.typography.titleMedium
                 )
 
-                Text(message)
+                Text("Select a storage location to save your images. If you have images from a previous save, they will be loaded into the gallery.")
 
                 Row(
                     Modifier.align(Alignment.End),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-
                     TextButton(onCancel) {
                         Text(stringResource(R.string.no))
                     }
 
-                    TextButton({ onAccept(payload) }) {
+                    TextButton({ onAccept() }) {
                         Text(stringResource(R.string.yes))
                     }
                 }
             }
         }
     }
-}
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun PreviewVerificationDialog() {
-    VerificationDialog<Unit>(
-        title = "Doing something",
-        message = "Are you sure?",
-        onCancel = {},
-        onAccept = {}
-    )
 }

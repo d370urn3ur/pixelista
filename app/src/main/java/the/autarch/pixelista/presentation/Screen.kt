@@ -1,4 +1,4 @@
-package the.autarch.pixelista
+package the.autarch.pixelista.presentation
 
 import android.util.Log
 import androidx.compose.foundation.Canvas

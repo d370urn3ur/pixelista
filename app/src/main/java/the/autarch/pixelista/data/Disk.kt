@@ -1,8 +1,9 @@
-package the.autarch.pixelista
+package the.autarch.pixelista.data
 
 import android.content.Context
 import android.util.Log
 import androidx.compose.ui.graphics.Color
+import androidx.documentfile.provider.DocumentFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -12,6 +13,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
+import androidx.core.net.toUri
 
 class Disk(context: Context) {
 
@@ -26,8 +28,12 @@ class Disk(context: Context) {
 
     init {
         scope.launch {
-            _images.value = loadFromDisk()
+            reloadDb()
         }
+    }
+
+    fun reloadDb() {
+        _images.value = loadFromDisk()
     }
 
     fun save(name: String, data: List<List<Color>>) {
@@ -61,8 +67,10 @@ class Disk(context: Context) {
         }
         try {
             val contents = Json.encodeToString(encodable)
-            appContext.openFileOutput(fileDb, Context.MODE_PRIVATE).use {
-                it.write(contents.toByteArray())
+            val file = getTargetFile() ?: return
+
+            appContext.contentResolver.openOutputStream(file.uri, "w")?.use { outputStream ->
+                outputStream.write(contents.toByteArray())
             }
         } catch (t: Throwable) {
             Log.e("DISK", "json encoding", t)
@@ -72,9 +80,14 @@ class Disk(context: Context) {
     @OptIn(ExperimentalSerializationApi::class)
     private fun loadFromDisk(): Map<String, List<List<Color>>> {
         return try {
-            val jsonData = Json.decodeFromStream<Map<String, List<List<ULong>>>>(
-                appContext.openFileInput(fileDb)
-            )
+
+            val file = getTargetFile() ?: return emptyMap()
+            if (!file.exists() || file.length() == 0L) return emptyMap()
+
+            val jsonData = appContext.contentResolver.openInputStream(file.uri)?.use { inputStream ->
+                Json.decodeFromStream<Map<String, List<List<ULong>>>>(inputStream)
+            } ?: return emptyMap()
+
             jsonData.mapValues { entry ->
                 entry.value.map { rows ->
                     rows.map { colorValue ->
@@ -86,5 +99,12 @@ class Disk(context: Context) {
             Log.e("DISK", "decode error", t)
             emptyMap()
         }
+    }
+
+    private fun getTargetFile(): DocumentFile? {
+        val treeUriString = StoragePrefs.getTreeUri(appContext) ?: return null
+        val treeUri = treeUriString.toUri()
+        val rootDir = DocumentFile.fromTreeUri(appContext, treeUri) ?: return null
+        return rootDir.findFile(fileDb) ?: rootDir.createFile("application/json", fileDb)
     }
 }

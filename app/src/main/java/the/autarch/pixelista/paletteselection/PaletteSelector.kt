@@ -1,4 +1,4 @@
-package the.autarch.pixelista
+package the.autarch.pixelista.paletteselection
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -16,11 +16,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import the.autarch.pixelista.R
 
 @Composable
 fun PaletteSelector(
     currentSelection: PaletteSelection,
-    modifier: Modifier = Modifier.Companion,
+    modifier: Modifier = Modifier,
     onSelect: (PaletteSelection) -> Unit,
 ) {
     Surface(

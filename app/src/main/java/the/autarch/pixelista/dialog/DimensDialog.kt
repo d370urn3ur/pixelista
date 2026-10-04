@@ -1,4 +1,4 @@
-package the.autarch.pixelista
+package the.autarch.pixelista.dialog
 
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement

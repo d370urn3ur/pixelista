@@ -1,4 +1,4 @@
-package the.autarch.pixelista
+package the.autarch.pixelista.dialog
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
@@ -31,6 +31,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 
 @Composable
 fun NumberWheel(
@@ -43,7 +44,6 @@ fun NumberWheel(
     val items = remember { (min..max).reversed().toList() }
 
     val itemHeight = 48.dp
-    // Show 3 visible items: above, center, below
     val visibleItemsCount = 3
     val wheelHeight = itemHeight * visibleItemsCount
 
@@ -63,7 +63,7 @@ fun NumberWheel(
             } else {
                 val viewportCenter = (layoutInfo.viewportEndOffset - layoutInfo.viewportStartOffset) / 2
                 val centeredItem = visibleItems.minByOrNull { item ->
-                    kotlin.math.abs((item.offset + item.size / 2) - viewportCenter)
+                    abs((item.offset + item.size / 2) - viewportCenter)
                 }
                 val lazyIndex = centeredItem?.index ?: initialIndex
                 (lazyIndex - 1).coerceIn(items.indices)
@@ -83,7 +83,7 @@ fun NumberWheel(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Up Arrow (moves towards 32 / higher numbers)
+
         TextButton(onClick = {
             coroutineScope.launch {
                 val targetIndex = (selectedIndex - 1).coerceAtLeast(0)
@@ -93,7 +93,6 @@ fun NumberWheel(
             Text("▲", style = MaterialTheme.typography.titleLarge)
         }
 
-        // Wheel Box with 3 visible items height
         Box(
             modifier = Modifier
                 .height(wheelHeight)
@@ -134,7 +133,6 @@ fun NumberWheel(
             }
         }
 
-        // Down Arrow (moves towards 8 / lower numbers)
         TextButton(onClick = {
             coroutineScope.launch {
                 val targetIndex = (selectedIndex + 1).coerceAtMost(items.size - 1)
