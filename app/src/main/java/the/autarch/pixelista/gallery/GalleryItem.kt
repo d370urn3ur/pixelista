@@ -21,10 +21,21 @@ fun GalleryItem(data: List<List<Color>>, selected: Boolean, onSelect: () -> Unit
         Modifier.Companion
     }
 
+    GalleryItemCanvas(
+        data,
+        selectedMod
+            .size(100.dp)
+            .clickable { onSelect() }
+    )
+}
+
+@Composable
+fun GalleryItemCanvas(data: List<List<Color>>, modifier: Modifier = Modifier) {
+
     val rows = data.size
     val cols = data.firstOrNull()?.size ?: 0
 
-    Canvas(selectedMod.size(100.dp).clickable { onSelect() }) {
+    Canvas(modifier) {
 
         var viewport = Rect.Zero
 

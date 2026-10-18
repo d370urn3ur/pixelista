@@ -6,15 +6,22 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import the.autarch.pixelista.R
 
@@ -24,6 +31,9 @@ fun PaletteSelector(
     modifier: Modifier = Modifier,
     onSelect: (PaletteSelection) -> Unit,
 ) {
+
+    val uriHandler = LocalUriHandler.current
+
     Surface(
         modifier = modifier
             .clickable(
@@ -39,9 +49,7 @@ fun PaletteSelector(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
 
-                    Button(
-                        onClick = { onSelect(selection) },
-                    ) {
+                    Button(onClick = { onSelect(selection) }) {
                         Text(selection.name)
                     }
 
@@ -52,8 +60,31 @@ fun PaletteSelector(
                             Modifier.padding(horizontal = 8.dp)
                         )
                     }
+
+                    Spacer(Modifier.weight(1f))
+
+                    selection.reference?.let { link ->
+                        IconButton({
+                            uriHandler.openUri(link)
+                        }) {
+                            Icon(
+                                painterResource(R.drawable.ic_info),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
                 }
             }
         }
     }
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun PreviewPaletteSelector() {
+    PaletteSelector(
+        currentSelection = PaletteSelection.default,
+        onSelect = {}
+    )
 }
