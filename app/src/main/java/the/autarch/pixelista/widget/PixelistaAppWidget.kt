@@ -17,6 +17,7 @@ import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
 import androidx.glance.LocalSize
 import androidx.glance.action.ActionParameters
+import androidx.glance.action.actionParametersOf
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
@@ -40,6 +41,7 @@ import the.autarch.pixelista.MainActivity
 import the.autarch.pixelista.data.PixelArtRepository
 
 private val WIDGET_INDEX_KEY = intPreferencesKey("widget_index")
+private val SELECTED_IMAGE_KEY = ActionParameters.Key<String>("selected_image_key")
 
 class PixelistaAppWidget : GlanceAppWidget() {
 
@@ -136,6 +138,16 @@ class PixelistaAppWidget : GlanceAppWidget() {
             }
         }
 
+        val clickableModifier = if (selectedKey != null) {
+            GlanceModifier.clickable(
+                actionStartActivity<MainActivity>(
+                    actionParametersOf(SELECTED_IMAGE_KEY to selectedKey)
+                )
+            )
+        } else {
+            GlanceModifier.clickable(actionStartActivity<MainActivity>())
+        }
+
         Box(
             GlanceModifier
                 .cornerRadius(android.R.dimen.system_app_widget_background_radius)
@@ -147,7 +159,7 @@ class PixelistaAppWidget : GlanceAppWidget() {
             Box(
                 GlanceModifier
                     .fillMaxSize()
-                    .clickable(actionStartActivity<MainActivity>()),
+                    .then(clickableModifier),
                 contentAlignment = Alignment.Center
             ) {
                 bitmap?.let { bitmap ->
