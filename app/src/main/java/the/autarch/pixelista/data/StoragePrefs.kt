@@ -7,6 +7,7 @@ object StoragePrefs {
 
     private const val PREFS_NAME = "pixelista_prefs"
     private const val KEY_TREE_URI = "tree_uri"
+    private const val KEY_WIDGET_INDEX = "widget_index"
 
     fun saveTreeUri(context: Context, uriString: String) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -16,5 +17,15 @@ object StoragePrefs {
     fun getTreeUri(context: Context): String? {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         return prefs.getString(KEY_TREE_URI, null)
+    }
+
+    fun getWidgetIndex(context: Context): Int {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getInt(KEY_WIDGET_INDEX, 0)
+    }
+
+    fun setWidgetIndex(context: Context, index: Int) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit { putInt(KEY_WIDGET_INDEX, index) }
     }
 }
