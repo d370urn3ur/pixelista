@@ -2,6 +2,8 @@ package the.autarch.pixelista.widget
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Paint
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.toArgb
@@ -13,10 +15,12 @@ import androidx.glance.GlanceModifier
 import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
+import androidx.glance.LocalSize
 import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.cornerRadius
@@ -40,6 +44,7 @@ private val WIDGET_INDEX_KEY = intPreferencesKey("widget_index")
 class PixelistaAppWidget : GlanceAppWidget() {
 
     override val stateDefinition: GlanceStateDefinition<*> = PreferencesGlanceStateDefinition
+    override val sizeMode: SizeMode = SizeMode.Exact
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         provideContent {
@@ -56,6 +61,11 @@ class PixelistaAppWidget : GlanceAppWidget() {
         val context = LocalContext.current
         val repository = remember(context) { PixelArtRepository(context) }
 
+        val size = LocalSize.current
+        val density = context.resources.displayMetrics.density
+        val targetWidthPx = (size.width.value * density).toInt().coerceAtLeast(1)
+        val targetHeightPx = (size.height.value * density).toInt().coerceAtLeast(1)
+
         val files = remember(storedIndex) {
             repository.reloadDb()
             repository.images.value
@@ -69,21 +79,57 @@ class PixelistaAppWidget : GlanceAppWidget() {
         val selectedKey = keys.getOrNull(safeIndex)
         val imageData = selectedKey?.let { key -> files[key] }
 
-        val bitmap = remember(imageData) {
+        val bitmap = remember(imageData, targetWidthPx, targetHeightPx) {
             imageData?.let { data ->
                 val rows = data.size
                 val cols = data.firstOrNull()?.size ?: 0
-                if (rows > 0 && cols > 0) {
-                    val pixels = IntArray(cols * rows)
-                    var index = 0
+                if (rows > 0 && cols > 0 && targetWidthPx > 0 && targetHeightPx > 0) {
+                    val bitmap = createBitmap(targetWidthPx, targetHeightPx)
+                    val canvas = Canvas(bitmap)
+                    val paint = Paint().apply {
+                        isAntiAlias = false
+                    }
+
+                    val widthF = targetWidthPx.toFloat()
+                    val heightF = targetHeightPx.toFloat()
+
+                    val viewportLeft: Float
+                    val viewportTop: Float
+                    val viewportWidth: Float
+                    val viewportHeight: Float
+
+                    if (rows >= cols) {
+                        val multiplier = cols.toFloat() / rows.toFloat()
+                        viewportHeight = heightF
+                        viewportWidth = heightF * multiplier
+                        viewportLeft = (widthF - viewportWidth) / 2f
+                        viewportTop = (heightF - viewportHeight) / 2f
+                    } else {
+                        val multiplier = rows.toFloat() / cols.toFloat()
+                        viewportWidth = widthF
+                        viewportHeight = widthF * multiplier
+                        viewportLeft = (widthF - viewportWidth) / 2f
+                        viewportTop = (heightF - viewportHeight) / 2f
+                    }
+
+                    val sizeX = viewportWidth / cols.toFloat()
+                    val sizeY = viewportHeight / rows.toFloat()
+
                     for (row in 0 until rows) {
                         for (col in 0 until cols) {
-                            pixels[index++] = data[row][col].toArgb()
+                            val currX = viewportLeft + col * sizeX
+                            val currY = viewportTop + row * sizeY
+                            paint.color = data[row][col].toArgb()
+                            canvas.drawRect(
+                                currX,
+                                currY,
+                                currX + sizeX,
+                                currY + sizeY,
+                                paint
+                            )
                         }
                     }
-                    createBitmap(cols, rows).apply {
-                        setPixels(pixels, 0, cols, 0, 0, cols, rows)
-                    }
+                    bitmap
                 } else {
                     null
                 }
