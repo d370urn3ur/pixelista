@@ -3,13 +3,12 @@ package the.autarch.pixelista.widget
 import android.annotation.SuppressLint
 import android.content.Context
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.createBitmap
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.Image
@@ -23,7 +22,8 @@ import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
-import androidx.glance.background
+import androidx.glance.appwidget.state.updateAppWidgetState
+import androidx.glance.currentState
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.ContentScale
@@ -32,33 +32,42 @@ import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxHeight
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.width
+import androidx.glance.state.GlanceStateDefinition
+import androidx.glance.state.PreferencesGlanceStateDefinition
 import the.autarch.pixelista.MainActivity
 import the.autarch.pixelista.data.PixelArtRepository
 import the.autarch.pixelista.data.StoragePrefs
 
-class PixelistaAppWidget: GlanceAppWidget() {
+val WIDGET_INDEX_KEY = intPreferencesKey("widget_index")
+
+class PixelistaAppWidget : GlanceAppWidget() {
+
+    override val stateDefinition: GlanceStateDefinition<*> = PreferencesGlanceStateDefinition
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         provideContent {
-            WidgetContent()
+            val prefs = currentState<Preferences>()
+            val storedIndex = prefs[WIDGET_INDEX_KEY] ?: StoragePrefs.getWidgetIndex(context)
+            WidgetContent(storedIndex)
         }
     }
 
     @SuppressLint("InlinedApi")
     @Composable
-    fun WidgetContent() {
+    fun WidgetContent(storedIndex: Int) {
 
         val context = LocalContext.current
-        val repository = remember(context) {
-            PixelArtRepository(context).apply { reloadDb() }
+        val repository = remember(context) { PixelArtRepository(context) }
+
+        val files = remember(storedIndex) {
+            repository.reloadDb()
+            repository.images.value
         }
-        val files by repository.images.collectAsState(initial = emptyMap())
 
         val keys = remember(files) {
             files.entries.sortedBy { it.key }.map { it.key }
         }
 
-        val storedIndex = StoragePrefs.getWidgetIndex(context)
         val safeIndex = if (keys.isNotEmpty()) storedIndex.coerceIn(0, keys.size - 1) else 0
         val selectedKey = keys.getOrNull(safeIndex)
         val imageData = selectedKey?.let { key -> files[key] }
@@ -103,7 +112,7 @@ class PixelistaAppWidget: GlanceAppWidget() {
                         provider = ImageProvider(bitmap),
                         modifier = GlanceModifier.fillMaxSize(),
                         contentScale = ContentScale.Fit,
-                        contentDescription = null
+                        contentDescription = selectedKey
                     )
                 }
             }
@@ -115,8 +124,7 @@ class PixelistaAppWidget: GlanceAppWidget() {
                 Box(
                     GlanceModifier
                         .fillMaxHeight()
-                        .width(72.dp)
-                        .background(Color.Red)
+                        .defaultWeight()
                         .clickable(actionRunCallback<PrevImageAction>()),
                 ) {}
 
@@ -131,8 +139,7 @@ class PixelistaAppWidget: GlanceAppWidget() {
                 Box(
                     GlanceModifier
                         .fillMaxHeight()
-                        .width(72.dp)
-                        .background(Color.Blue)
+                        .defaultWeight()
                         .clickable(actionRunCallback<NextImageAction>()),
                 ) {}
             }
@@ -146,12 +153,16 @@ class PrevImageAction : ActionCallback {
         repository.reloadDb()
         val files = repository.images.value
         val keys = files.entries.sortedBy { it.key }.map { it.key }
-        if (keys.isNotEmpty()) {
-            val currentIndex = StoragePrefs.getWidgetIndex(context)
-            val newIndex = if (currentIndex > 0) currentIndex - 1 else keys.size - 1
-            StoragePrefs.setWidgetIndex(context, newIndex)
-            PixelistaAppWidget().update(context, glanceId)
+
+        val currentIndex = StoragePrefs.getWidgetIndex(context)
+        val maxIndex = if (keys.isNotEmpty()) keys.size - 1 else 0
+        val newIndex = if (currentIndex > 0) currentIndex - 1 else maxIndex
+
+        StoragePrefs.setWidgetIndex(context, newIndex)
+        updateAppWidgetState(context, glanceId) { prefs ->
+            prefs[WIDGET_INDEX_KEY] = newIndex
         }
+        PixelistaAppWidget().update(context, glanceId)
     }
 }
 
@@ -161,11 +172,15 @@ class NextImageAction : ActionCallback {
         repository.reloadDb()
         val files = repository.images.value
         val keys = files.entries.sortedBy { it.key }.map { it.key }
-        if (keys.isNotEmpty()) {
-            val currentIndex = StoragePrefs.getWidgetIndex(context)
-            val newIndex = if (currentIndex < keys.size - 1) currentIndex + 1 else 0
-            StoragePrefs.setWidgetIndex(context, newIndex)
-            PixelistaAppWidget().update(context, glanceId)
+
+        val currentIndex = StoragePrefs.getWidgetIndex(context)
+        val maxIndex = if (keys.isNotEmpty()) keys.size - 1 else 0
+        val newIndex = if (currentIndex < maxIndex) currentIndex + 1 else 0
+
+        StoragePrefs.setWidgetIndex(context, newIndex)
+        updateAppWidgetState(context, glanceId) { prefs ->
+            prefs[WIDGET_INDEX_KEY] = newIndex
         }
+        PixelistaAppWidget().update(context, glanceId)
     }
 }

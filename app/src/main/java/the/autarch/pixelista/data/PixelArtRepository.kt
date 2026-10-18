@@ -1,8 +1,15 @@
 package the.autarch.pixelista.data
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.ui.graphics.Color
+import androidx.glance.appwidget.updateAll
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import the.autarch.pixelista.widget.PixelistaAppWidget
 
 class PixelArtRepository(context: Context) {
 
