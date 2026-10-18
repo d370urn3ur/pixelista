@@ -5,7 +5,6 @@ import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.unit.dp
 import androidx.core.graphics.createBitmap
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.intPreferencesKey
@@ -31,14 +30,12 @@ import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxHeight
 import androidx.glance.layout.fillMaxSize
-import androidx.glance.layout.width
 import androidx.glance.state.GlanceStateDefinition
 import androidx.glance.state.PreferencesGlanceStateDefinition
 import the.autarch.pixelista.MainActivity
 import the.autarch.pixelista.data.PixelArtRepository
-import the.autarch.pixelista.data.StoragePrefs
 
-val WIDGET_INDEX_KEY = intPreferencesKey("widget_index")
+private val WIDGET_INDEX_KEY = intPreferencesKey("widget_index")
 
 class PixelistaAppWidget : GlanceAppWidget() {
 
@@ -47,7 +44,7 @@ class PixelistaAppWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         provideContent {
             val prefs = currentState<Preferences>()
-            val storedIndex = prefs[WIDGET_INDEX_KEY] ?: StoragePrefs.getWidgetIndex(context)
+            val storedIndex = prefs[WIDGET_INDEX_KEY] ?: 0
             WidgetContent(storedIndex)
         }
     }
@@ -120,7 +117,7 @@ class PixelistaAppWidget : GlanceAppWidget() {
             Row(
                 GlanceModifier.fillMaxSize()
             ) {
-                // Left tap area for previous image (Red background for visualization)
+                // Left tap area for previous image
                 Box(
                     GlanceModifier
                         .fillMaxHeight()
@@ -128,14 +125,14 @@ class PixelistaAppWidget : GlanceAppWidget() {
                         .clickable(actionRunCallback<PrevImageAction>()),
                 ) {}
 
-                // Middle spacer filling remaining width between Red and Blue
+                // Middle spacer filling remaining width
                 Spacer(
                     GlanceModifier
                         .fillMaxHeight()
                         .defaultWeight()
                 )
 
-                // Right tap area for next image (Blue background for visualization)
+                // Right tap area for next image
                 Box(
                     GlanceModifier
                         .fillMaxHeight()
@@ -154,12 +151,10 @@ class PrevImageAction : ActionCallback {
         val files = repository.images.value
         val keys = files.entries.sortedBy { it.key }.map { it.key }
 
-        val currentIndex = StoragePrefs.getWidgetIndex(context)
-        val maxIndex = if (keys.isNotEmpty()) keys.size - 1 else 0
-        val newIndex = if (currentIndex > 0) currentIndex - 1 else maxIndex
-
-        StoragePrefs.setWidgetIndex(context, newIndex)
         updateAppWidgetState(context, glanceId) { prefs ->
+            val currentIndex = prefs[WIDGET_INDEX_KEY] ?: 0
+            val maxIndex = if (keys.isNotEmpty()) keys.size - 1 else 0
+            val newIndex = if (currentIndex > 0) currentIndex - 1 else maxIndex
             prefs[WIDGET_INDEX_KEY] = newIndex
         }
         PixelistaAppWidget().update(context, glanceId)
@@ -173,12 +168,10 @@ class NextImageAction : ActionCallback {
         val files = repository.images.value
         val keys = files.entries.sortedBy { it.key }.map { it.key }
 
-        val currentIndex = StoragePrefs.getWidgetIndex(context)
-        val maxIndex = if (keys.isNotEmpty()) keys.size - 1 else 0
-        val newIndex = if (currentIndex < maxIndex) currentIndex + 1 else 0
-
-        StoragePrefs.setWidgetIndex(context, newIndex)
         updateAppWidgetState(context, glanceId) { prefs ->
+            val currentIndex = prefs[WIDGET_INDEX_KEY] ?: 0
+            val maxIndex = if (keys.isNotEmpty()) keys.size - 1 else 0
+            val newIndex = if (currentIndex < maxIndex) currentIndex + 1 else 0
             prefs[WIDGET_INDEX_KEY] = newIndex
         }
         PixelistaAppWidget().update(context, glanceId)
