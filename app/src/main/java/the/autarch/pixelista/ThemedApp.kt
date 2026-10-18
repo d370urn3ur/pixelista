@@ -4,8 +4,8 @@ import androidx.compose.runtime.Composable
 import the.autarch.pixelista.ui.theme.PixelistaTheme
 
 @Composable
-fun ThemedApp() {
+fun ThemedApp(selectedImageKey: String? = null) {
     PixelistaTheme {
-        App()
+        App(selectedImageKey = selectedImageKey)
     }
 }

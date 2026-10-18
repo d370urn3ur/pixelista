@@ -51,7 +51,7 @@ import the.autarch.pixelista.presentation.ToolsBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun App() {
+fun App(selectedImageKey: String? = null) {
 
     val context = LocalContext.current
 
@@ -69,6 +69,12 @@ fun App() {
             }
         }
     )
+
+    LaunchedEffect(selectedImageKey) {
+        selectedImageKey?.let { key ->
+            viewModel.onEvent(PixelArtUiEvent.LoadDrawing(key))
+        }
+    }
 
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val rows = state.pxField.size

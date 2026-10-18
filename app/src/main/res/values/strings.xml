@@ -11,4 +11,6 @@
     <string name="dialog_title_delete_image">Delete Picture</string>
     <string name="dialog_message_delete_image">If you delete this picture you will not be able to recover it. Are you sure you want to continue?</string>
 
+    <string name="app_widget_description">Pixelista Gallery</string>
+
 </resources>
